@@ -50,9 +50,6 @@ class Visitor {
 public:
     Derived& derived() { return static_cast<Derived&>(*this); }
     R dispatch(const Expr* e, Args... args);
-    R visit(const AddExpr* e, Args... args) { return derived().visit(e, args...); }
-    R visit(const IdExpr*  e, Args... args) { return derived().visit(e, args...); }
-    R visit(const NumExpr* e, Args... args) { return derived().visit(e, args...); }
 };
 
 template<class Derived, class R, class... Args>
