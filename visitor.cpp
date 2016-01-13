@@ -77,17 +77,17 @@ public:
     std::ostream& visit(const NumExpr* e) { return std::cout << e->num; }
 };
 
-class Dumper2 : public Visitor<Dumper2, std::ostream&> {
+class Dumper2 : public Visitor<Dumper2, std::ostream&, std::ostream&> {
 public:
-    std::ostream& visit(const AddExpr* e) {
-        std::cout << '(';
-        dispatch(e->left);
-        std::cout << " + ";
-        dispatch(e->right);
-        return std::cout << ')';
+    std::ostream& visit(const AddExpr* e, std::ostream& o) {
+        o << '(';
+        dispatch(e->left, o);
+        o << " + ";
+        dispatch(e->right, o);
+        return o << ')';
     }
-    std::ostream& visit(const IdExpr*  e) { return std::cout << e->id; }
-    std::ostream& visit(const NumExpr* e) { return std::cout << e->num; }
+    std::ostream& visit(const IdExpr*  e, std::ostream& o) { return o << e->id; }
+    std::ostream& visit(const NumExpr* e, std::ostream& o) { return o << e->num; }
 };
 
 int main() {
@@ -95,6 +95,9 @@ int main() {
     Dumper d;
     d.dispatch(expr);
     std::cout << std::endl;
+    Dumper2 d2;
+    d2.dispatch(expr, std::cerr);
+    std::cerr << std::endl;
     delete expr;
     return 0;
 }
