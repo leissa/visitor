@@ -5,9 +5,19 @@
 
 using namespace std;
 
+#define EXPRS(m) \
+    m(AddExpr) \
+    m(IdExpr) \
+    m(NumExpr)
+
 class Expr {
 public:
     virtual ~Expr() {}
+
+private:
+    mutable int val;
+
+    friend class Sum;
 };
 
 class AddExpr : public Expr {
@@ -49,15 +59,15 @@ template<class Derived, class R, class... Args>
 class Visitor {
 public:
     Derived& derived() { return static_cast<Derived&>(*this); }
-    R dispatch(const Expr* e, Args... args);
+    R dispatch(const Expr* e, Args&&... args);
 };
 
 template<class Derived, class R, class... Args>
-R Visitor<Derived, R, Args...>::dispatch(const Expr* e, Args... args) {
+R Visitor<Derived, R, Args...>::dispatch(const Expr* e, Args&&... args) {
     if (false) {}
-    else if (typeid(*e) == typeid(AddExpr)) return derived().visit(static_cast<const AddExpr*>(e), args...);
-    else if (typeid(*e) == typeid( IdExpr)) return derived().visit(static_cast<const  IdExpr*>(e), args...);
-    else if (typeid(*e) == typeid(NumExpr)) return derived().visit(static_cast<const NumExpr*>(e), args...);
+#define DISPATCH(E) \
+    else if (typeid(*e) == typeid(E)) return derived().visit(static_cast<const AddExpr*>(e), std::forward<Args>(args)...);
+    EXPRS(DISPATCH)
     else assert(false);
 }
 
@@ -87,6 +97,17 @@ public:
     std::ostream& visit(const NumExpr* e, std::ostream& o) { return o << e->num; }
 };
 
+class Sum : public Visitor<Sum, int> {
+public:
+    int sum(const Expr* e) { return e->val = dispatch(e); }
+    int visit(const AddExpr* e) {
+        return sum(e->left) + sum(e->right);
+    }
+
+    int visit(const IdExpr*) { return 23; }
+    int visit(const NumExpr* e) { return e->num; }
+};
+
 int main() {
     auto expr = new AddExpr(new IdExpr("x"), new NumExpr(42));
     Dumper d;
@@ -95,6 +116,8 @@ int main() {
     Dumper2 d2;
     d2.dispatch(expr, std::cerr);
     std::cerr << std::endl;
+    Sum sum;
+    std::cout << sum.sum(expr) << std::endl;
     delete expr;
     return 0;
 }
